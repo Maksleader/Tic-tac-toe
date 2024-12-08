@@ -69,29 +69,58 @@ void initPlayers(Game& game)
 	}
 }
 
-Coord findCentralCoords(Game& game)
+
+Coord* findCentralCoordsForEvenSizePlayGround(size_t size)
+{
+	const size_t centralCoordsCount = 4;
+	Coord* coords = new Coord[centralCoordsCount];
+	coords[0].x = size / 2;
+	coords[0].y = size / 2;
+
+	coords[1].x = size / 2 - 1;
+	coords[1].y = size / 2 - 1;
+
+	coords[2].x = size / 2 - 1;
+	coords[2].y = size / 2;
+
+	coords[3].x = size / 2;
+	coords[3].y = size / 2 - 1;
+
+	for (int i = 0; i< centralCoordsCount; i++)
+	{
+		std::cout << "cords[" << i << "]= " << coords[i].x << " " << coords[i].y <<std::endl;
+	}
+
+	return coords;
+}
+
+
+Coord getCentralCoord(const Game& game)
 {
 	Coord coord;
 
-	if (game.Size % 2)
+	if (game.Size % 2 == 0)
 	{
 		const size_t centralCoordsCount = 4;
-		Coord* coords = new Coord[centralCoordsCount];
-		coords[0].x = game.Size / 2;
-		coords[0].y = game.Size / 2;
 
-		coords[1].x = game.Size / 2 - 1;
-		coords[1].y = game.Size / 2 - 1;
+		Coord* centralCoords = findCentralCoordsForEvenSizePlayGround(game.Size);
 
-		coords[2].x = game.Size / 2 - 1;
-		coords[2].y = game.Size / 2;
+		std::vector<int> indices = { 0, 1, 2, 3 };
+		unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+		std::shuffle(indices.begin(), indices.end(), std::default_random_engine(seed));
 
-		coords[3].x = game.Size / 2;
-		coords[3].y = game.Size / 2 - 1;
+		for (int index : indices)
+		{
+			size_t x = centralCoords[index].x;
+			size_t y = centralCoords[index].y;
 
-		int randomIndex = getRandomNumber(0, 10000) % centralCoordsCount;
-
-
+			if (game.playGround[y][x] == Cell::Empty)
+			{
+				coord = centralCoords[index];
+				delete[] centralCoords;
+				break;
+			}
+		}
 	}
 	else
 	{
@@ -179,11 +208,18 @@ Coord playerMove(const Game& game) {
 	return move;
 }
 
-Coord aiMove()
+Coord aiMove(const Game& game)
 {
 	Coord move;
 
-	return move;
+	Coord centralElement = getCentralCoord(game);
+
+	if (centralElement.x != 0 && centralElement.y != 0)
+	{
+		return  centralElement;
+	}
+	
+
 }
 
 void move(Game& game)
@@ -197,7 +233,7 @@ void move(Game& game)
 	}
 	else
 	{
-		Coord coordinate = aiMove();
+		Coord coordinate = aiMove(game);
 		game.playGround[coordinate.y][coordinate.x] = game.player2.playerSymbol;
 		game.player2.turn = false;
 		game.player1.turn = true;
